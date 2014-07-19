@@ -129,7 +129,8 @@ writeExp e = case e of
   binOp op l r = paren (writeExp l) <> " " <> op 
                  <> " " <> paren (writeExp r)
 
-data Assoc = forall a. Assoc String (E a)
+data Assoc :: * where
+  Assoc :: String -> E a -> Assoc
 
 data E :: CType -> * where 
   EInt      :: Int -> E Number
@@ -167,6 +168,9 @@ data Query where
    -> Query
   QUnion :: Bool -> Query -> Query -> Query
 
+instance Show Query where
+  show = writeQuery :: Query -> String
+
 writeQuery :: (Monoid s, IsString s) => Query -> s
 writeQuery query = case query of
   QMatch match ret orderBy skip limit -> 
@@ -198,3 +202,4 @@ example2 = simpleMatch
   me = EIdent "me"
   left = ENode (Just me) [] []
   right = ENode (Just remote_friend) [] []
+
