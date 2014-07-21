@@ -18,6 +18,9 @@ before_install:
   - tar -xzf neo4j-community-$NEOVER-unix.tar.gz
   - neo4j-community-$NEOVER/bin/neo4j start
 
+install:
+ - cabal-1.20 install -j --only-dependencies --enable-tests --enable-benchmarks
+
 script:
  - cabal-1.20 configure -fexamples --enable-tests --enable-benchmarks --enable-library-coverage --ghc-options="-Wall -Werror"
 
