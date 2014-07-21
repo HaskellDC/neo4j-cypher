@@ -10,14 +10,8 @@ import qualified Data.ByteString.Lazy.Char8 as B
 import Database.Neo4j.Types
 import qualified Data.Text as T
 
-dbServer :: Server
-dbServer = Server "http://localhost:7474/db/data/transaction/commit"
-
 type Query = String
  
-qs :: Query
-qs = "return 1"
-
 createRequest :: Query -> Value
 createRequest query = 
   object ["statements" .= [
@@ -27,7 +21,6 @@ createRequest query =
       ]
     ]
   ]
-
 
 queryDB :: Server -> Query -> IO (H.Result B.ByteString)
 queryDB server query = fmap (fmap (H.rspBody)) (H.simpleHTTP request)
