@@ -47,10 +47,9 @@ test-suite db-test-suite
   type: exitcode-stdio-1.0
   main-is: Database/test-suite.hs
   build-depends:
-      base
+      base >=4.6 && <4.7
     , HUnit
     , neo4j-cypher
-    , mtl
     , tasty
     , tasty-hunit
     , tasty-quickcheck
