@@ -1,2 +1,44 @@
-language: haskell
-ghc: 7.8
+env:
+  matrix:
+    #- GHCVER=7.8.3      NEOVER=2.1.2
+    - GHCVER=7.6.3      NEOVER=2.1.2
+
+before_install:
+  - sudo add-apt-repository -y ppa:hvr/ghc
+  - sudo apt-get update
+  - sudo apt-get install cabal-install-1.20 ghc-$GHCVER
+  - export PATH=/opt/ghc/$GHCVER/bin:~/.cabal/bin:$PATH
+  - cabal-1.20 update
+  # install hpc-coveralls
+  - cabal-1.20 sandbox init
+  - cabal-1.20 install hpc-coveralls -j --bindir=$HOME/.cabal/bin/ --constraint='aeson >= 0.7'
+  - cabal-1.20 sandbox delete
+  # install neo4j
+  - wget dist.neo4j.org/neo4j-community-$NEOVER-unix.tar.gz
+  - tar -xzf neo4j-community-$NEOVER-unix.tar.gz
+  - neo4j-community-$NEOVER/bin/neo4j start
+
+script:
+ - cabal-1.20 configure -fexamples --enable-tests --enable-benchmarks --enable-library-coverage --ghc-options="-Wall -Werror"
+
+ # this builds all libraries and executables
+ - cabal-1.20 build -j
+
+ - run-cabal-test --cabal-name=cabal-1.20 --show-details=always
+ - cabal-1.20 check
+
+ # tests that a source-distribution can be generated
+ - cabal-1.20 sdist
+
+ # check that the generated source-distribution can be built & installed
+ - export SRC_TGZ=$(cabal-1.20 info . | awk '{print $2 ".tar.gz";exit}') ;
+   (cd dist/;
+   if [ -f "$SRC_TGZ" ]; then
+      cabal-1.20 install "$SRC_TGZ";
+   else
+      echo "expected '$SRC_TGZ' not found";
+      exit 1;
+   fi)
+
+after_script:
+  - hpc-coveralls test-suite
