@@ -6,6 +6,7 @@ import Test.Tasty.TH
 import Database.Neo4j
 import Database.Neo4j.Types
 
+dbServer :: Server
 dbServer = Server "http://127.0.0.1:7474/db/data/transaction/commit"
 
 simpleQuery :: Query
