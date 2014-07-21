@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-import Test.HUnit.Lang (HUnitFailure(..))
 import Test.Tasty.HUnit
 import Test.Tasty.TH
-import Test.Tasty.QuickCheck hiding (reason)
 
 import Database.Neo4j
 

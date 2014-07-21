@@ -44,7 +44,7 @@ script:
    fi)
 
 after_script:
-  - hpc-coveralls test-suite
+  - hpc-coveralls db-test-suite
 
 notifications:
   webhooks:
