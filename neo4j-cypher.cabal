@@ -23,7 +23,7 @@ library
                        Database.Neo4j.Types
   -- other-modules:       
   other-extensions:    GADTs, DataKinds
-  build-depends:       base >=4.6 && <4.7,
+  build-depends:       base >=4.6 && <4.8,
                        aeson >=0.7 && <0.9,
                        bytestring >=0.10 && <0.11,
                        HTTP >=4000.2 && <4000.3,
@@ -47,7 +47,7 @@ test-suite db-test-suite
   type: exitcode-stdio-1.0
   main-is: Database/test-suite.hs
   build-depends:
-      base >=4.6 && <4.7
+      base >=4.6 && <4.8
     , HUnit
     , neo4j-cypher
     , tasty
