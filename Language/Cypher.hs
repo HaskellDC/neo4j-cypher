@@ -183,23 +183,7 @@ writeQuery query = case query of
     writeQuery left <> " UNION " <> (if uall then "ALL " else "")
     <> writeQuery right
 
-
 simpleMatch :: E Pattern -> [E a] -> Query
 simpleMatch match ret = 
   QMatch match ret (Nothing :: Maybe (E Number)) Nothing Nothing
-
-example :: Query
-example = simpleMatch (ENode (Just n) [] []) [n] where
-  n = EIdent "n"
-
-example2 :: Query
-example2 = simpleMatch
-  (ERel left right (ManyEdges range) RelBoth [] ["KNOWS"])
-  [EProp remote_friend "name"]
-  where
-  range = Range (Just 1) (Just 2)
-  remote_friend = EIdent "remote_friend"
-  me = EIdent "me"
-  left = ENode (Just me) [] []
-  right = ENode (Just remote_friend) [] []
 
