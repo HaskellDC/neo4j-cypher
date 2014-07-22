@@ -7,6 +7,7 @@ import qualified Network.Stream as H
 import Network.URI (parseURI)
 import qualified Data.ByteString.Lazy.Char8 as B
 import Database.Neo4j.Types
+import Data.Aeson ((.=), object)
 import qualified Data.Aeson as A
 import qualified Data.Text as T
 
@@ -14,9 +15,9 @@ type Query = String
  
 createRequest :: Query -> A.Value
 createRequest query = 
-  A.object ["statements" A..= [
-      A.object [
-        "statement" A..= query
+  object ["statements" .= [
+      object [
+        "statement" .= query
         --"parameters" .= object []
       ]
     ]

@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RecordWildCards #-}
+
 
 module Database.Neo4j.Types
   ( 
@@ -12,10 +14,8 @@ import Data.Data (Data)
 import Data.Int (Int64)
 import Data.Typeable (Typeable)
 
-import Data.Aeson ((.=), (.:))
-import Data.Aeson.TH
 import qualified Data.Aeson as A
-import Data.Scientific
+import Data.Scientific (toRealFloat, coefficient, base10Exponent)
 
 data Value
   = Int !Int64
@@ -41,7 +41,6 @@ instance A.FromJSON Value where
         | otherwise = Int $ fromIntegral $ coefficient n * 10 ^ e
         where
           e = base10Exponent n
-          toRealFloat = realToFrac
       maxInt = fromIntegral (maxBound :: Int64)
 
 instance A.ToJSON Value where
