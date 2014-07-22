@@ -28,7 +28,9 @@ library
                        bytestring >=0.10 && <0.11,
                        HTTP >=4000.2 && <4000.3,
                        network >=2.4 && <2.6,
-                       text
+                       text,
+                       lens,
+                       scientific
   -- hs-source-dirs:      
   default-language:    Haskell2010
   ghc-options:         -Wall
@@ -48,6 +50,8 @@ test-suite db-test-suite
   main-is: Database/test-suite.hs
   build-depends:
       base >=4.6 && <4.8
+    , bytestring >=0.10 && <0.11
+    , HTTP >=4000.2 && <4000.3
     , HUnit
     , neo4j-cypher
     , tasty
