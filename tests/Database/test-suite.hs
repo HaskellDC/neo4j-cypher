@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-import Test.Tasty.HUnit
-import Test.Tasty.TH
-import Control.Exception
-import Control.Monad
+import Test.Tasty.HUnit ((@?=), Assertion, assertBool, assertFailure, testCase)
+import Test.Tasty.TH (defaultMainGenerator)
+import Control.Exception (Exception, handleJust)
+import Control.Monad (guard)
 
 import Database.Neo4j
 import Database.Neo4j.Types
