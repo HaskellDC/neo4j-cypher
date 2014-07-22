@@ -16,6 +16,10 @@ simpleQuery = "RETURN 1"
 
 --------------------------------------------------
 
+isLeft :: Either a b -> Bool
+isLeft (Left a) = True
+isLeft (Right b) = False
+
 assertException :: (Exception e, Eq e) => e -> IO a -> IO ()
 assertException ex action =
   handleJust isWanted (const $ return ()) $ do
