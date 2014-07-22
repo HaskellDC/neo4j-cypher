@@ -23,7 +23,7 @@ isLeft (Right b) = False
 assertException :: (Exception e, Eq e) => e -> IO a -> IO ()
 assertException ex action =
   handleJust isWanted (const $ return ()) $ do
-    action
+    _ <- action
     assertFailure $ "Expected exception: " ++ show ex ++ "\nActual exception"
     where isWanted = guard . (== ex)
 
