@@ -25,7 +25,7 @@ createRequest query =
   ]
 
 queryDBRaw :: Server -> Query -> IO (H.Result B.ByteString)
-queryDBRaw server query = fmap (fmap (H.rspBody)) (H.simpleHTTP request)
+queryDBRaw server query = fmap (fmap H.rspBody) (H.simpleHTTP request)
   where 
     Just uri = parseURI $ T.unpack $ serverURI server
     body = A.encode $ createRequest query
