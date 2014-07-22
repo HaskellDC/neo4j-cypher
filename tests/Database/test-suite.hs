@@ -4,10 +4,6 @@ import Test.Tasty.HUnit
 import Test.Tasty.TH
 import Control.Exception
 import Control.Monad
-import System.IO.Error
-import GHC.IO.Exception
-import qualified Data.ByteString.Lazy.Char8 as B
-import Network.HTTP
 
 import Database.Neo4j
 import Database.Neo4j.Types
@@ -21,8 +17,8 @@ simpleQuery = "RETURN 1"
 --------------------------------------------------
 
 isLeft :: Either a b -> Bool
-isLeft (Left x) = True
-isLeft (Right y) = False
+isLeft (Left _) = True
+isLeft (Right _) = False
 
 assertException :: (Exception e, Eq e) => e -> IO a -> IO ()
 assertException ex action =
@@ -32,7 +28,7 @@ assertException ex action =
     where isWanted = guard . (== ex)
 
 case_queryBadServer :: Assertion
-case_queryBadServer = do
+case_queryBadServer = 
   assertException (userError badLookupMessage) (queryDBRaw badServer simpleQuery)
   where 
     badServer = Server "http://wutwut"
