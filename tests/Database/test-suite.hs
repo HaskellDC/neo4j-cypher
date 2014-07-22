@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-import Test.Tasty.HUnit ((@?=), Assertion, assertBool, assertFailure, testCase)
+import Test.Tasty.HUnit ((@?=), Assertion, assertFailure, testCase)
 import Test.Tasty.TH (defaultMainGenerator)
 import Control.Exception (Exception, handleJust)
 import Control.Monad (guard)
@@ -17,8 +17,8 @@ simpleQuery = "RETURN 1"
 --------------------------------------------------
 
 isLeft :: Either a b -> Bool
-isLeft (Left a) = True
-isLeft (Right b) = False
+isLeft (Left _) = True
+isLeft (Right _) = False
 
 assertException :: (Exception e, Eq e) => e -> IO a -> IO ()
 assertException ex action =
