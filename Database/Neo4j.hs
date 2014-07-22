@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Database.Neo4j where
+module Database.Neo4j 
+  where
 
 import qualified Network.HTTP as H
 import qualified Network.Stream as H
