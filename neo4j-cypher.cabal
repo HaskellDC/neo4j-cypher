@@ -7,7 +7,7 @@ version:             0.1.0.0
 -- description:         
 license:             BSD3
 license-file:        LICENSE
-author:              Ben Sherman / HaskellDC
+author:              HaskellDC
 maintainer:          benjaminsherman7@gmail.com
 -- copyright:           
 category:            Language
@@ -37,12 +37,12 @@ library
 source-repository head
   type: git
   branch: develop
-  location: https://github.com/maoe/neo4j-cypher.git
+  location: https://github.com/HaskellDC/neo4j-cypher.git
 
 source-repository this
   type: git
   tag: v0.1.0.0
-  location: https://github.com/maoe/neo4j-cypher.git
+  location: https://github.com/HaskellDC/neo4j-cypher.git
 
 test-suite db-test-suite
   type: exitcode-stdio-1.0
