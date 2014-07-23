@@ -28,7 +28,8 @@ library
                        bytestring >=0.10 && <0.11,
                        HTTP >=4000.2 && <4000.3,
                        network >=2.4 && <2.6,
-                       text
+                       text,
+                       scientific
   -- hs-source-dirs:      
   default-language:    Haskell2010
   ghc-options:         -Wall
@@ -48,6 +49,8 @@ test-suite db-test-suite
   main-is: Database/test-suite.hs
   build-depends:
       base >=4.6 && <4.8
+    , bytestring >=0.10 && <0.11
+    , HTTP >=4000.2 && <4000.3
     , HUnit
     , neo4j-cypher
     , tasty
@@ -58,3 +61,23 @@ test-suite db-test-suite
     , vector
   hs-source-dirs: tests
   default-language: Haskell2010
+
+test-suite cypher-test-suite
+  type: exitcode-stdio-1.0
+  main-is: Language/cypher-test-suite.hs
+  build-depends:
+      base >=4.6 && <4.8
+    , neo4j-cypher
+    , HUnit
+    , tasty
+    , tasty-hunit
+    , tasty-th
+  hs-source-dirs: tests
+  default-language: Haskell2010
+
+test-suite hlint
+  build-depends:    base, hlint == 1.9.*
+  default-language: Haskell2010
+  hs-source-dirs:   tests
+  main-is:          HLint.hs
+  type:             exitcode-stdio-1.0
