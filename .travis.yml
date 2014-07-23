@@ -32,7 +32,7 @@ script:
   # this builds all libraries and executables
   - cabal-1.20 build -j
 
-  - run-cabal-test --cabal-name=cabal-1.20 --show-details=always
+  - run-cabal-test --cabal-name=cabal-1.20 --show-details=always 
   - cabal-1.20 check
 
   # tests that a source-distribution can be generated
@@ -49,7 +49,7 @@ script:
     fi)
 
 after_script:
-  - hpc-coveralls db-test-suite
+  - hpc-coveralls db-test-suite cypher-test-suite hlint
 
 notifications:
   webhooks:
