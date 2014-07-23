@@ -1,20 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-import Test.Tasty.HUnit ((@?=), Assertion, assertFailure, testCase)
+import Test.Tasty.HUnit ((@?=), Assertion, testCase)
 import Test.Tasty.TH (defaultMainGenerator)
-import Control.Exception (Exception, handleJust)
-import Control.Monad (guard)
 
 import Language.Cypher
 
-case_example :: Assertion
-case_example = 
+case_simpleMatchExample :: Assertion
+case_simpleMatchExample = 
   show (simpleMatch (ENode (Just n) [] []) [n]) @?= "MATCH (n) RETURN n"
   where
     n = EIdent "n"
 
-case_example2 :: Assertion
-case_example2 =
+case_simpleMatchExample2 :: Assertion
+case_simpleMatchExample2 =
   show ex2 @?= "MATCH (me)-[:KNOWS*1..2]-(remote_friend) RETURN remote_friend.name" 
   where
     ex2 :: Query
