@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
-import Test.Tasty.HUnit ((@?=), Assertion, assertFailure, testCase)
+import Test.Tasty.HUnit ((@?=), Assertion, testCase)
 import Test.Tasty.TH (defaultMainGenerator)
-import Control.Exception (Exception, handleJust)
-import Control.Monad (guard)
+--import Control.Exception (Exception, handleJust)
+--import Control.Monad (guard)
 
 import Database.Neo4j
 import Database.Neo4j.Types
@@ -20,12 +20,12 @@ simpleQuery = "RETURN 1"
 --isLeft (Left _) = True
 --isLeft (Right _) = False
 
-assertException :: (Exception e, Eq e) => e -> IO a -> IO ()
-assertException ex action =
-  handleJust isWanted (const $ return ()) $ do
-    _ <- action
-    assertFailure $ "Expected exception: " ++ show ex ++ "\nActual exception"
-    where isWanted = guard . (== ex)
+--assertException :: (Exception e, Eq e) => e -> IO a -> IO ()
+--assertException ex action =
+--  handleJust isWanted (const $ return ()) $ do
+--    _ <- action
+--    assertFailure $ "Expected exception: " ++ show ex ++ "\nActual exception"
+--    where isWanted = guard . (== ex)
 
 -- this fails differently on mac and ubuntu; need to figure out how to really test exceptions
 -- commenting out for now
