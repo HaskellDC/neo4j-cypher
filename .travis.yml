@@ -16,7 +16,6 @@ before_install:
   # install hpc-coveralls and happy
   - cabal-1.20 sandbox init
   - cabal-1.20 install hpc-coveralls -j --bindir=$HOME/.cabal/bin/ --constraint='aeson >= 0.7'
-  - cabal-1.20 install happy -j --bindir=$HOME/.cabal/bin/
   - cabal-1.20 sandbox delete
   # install neo4j
   - wget dist.neo4j.org/neo4j-community-$NEOVER-unix.tar.gz
@@ -24,29 +23,30 @@ before_install:
   - neo4j-community-$NEOVER/bin/neo4j start
 
 install:
- - cabal-1.20 install -j --only-dependencies --enable-tests --enable-benchmarks
+  - cabal-1.20 install happy -j --bindir=$HOME/.cabal/bin/
+  - cabal-1.20 install -j --only-dependencies --enable-tests --enable-benchmarks
 
 script:
- - cabal-1.20 configure -fexamples --enable-tests --enable-benchmarks --enable-library-coverage --ghc-options="-Wall -Werror"
+  - cabal-1.20 configure -fexamples --enable-tests --enable-benchmarks --enable-library-coverage --ghc-options="-Wall -Werror"
 
- # this builds all libraries and executables
- - cabal-1.20 build -j
+  # this builds all libraries and executables
+  - cabal-1.20 build -j
 
- - run-cabal-test --cabal-name=cabal-1.20 --show-details=always
- - cabal-1.20 check
+  - run-cabal-test --cabal-name=cabal-1.20 --show-details=always
+  - cabal-1.20 check
 
- # tests that a source-distribution can be generated
- - cabal-1.20 sdist
+  # tests that a source-distribution can be generated
+  - cabal-1.20 sdist
 
- # check that the generated source-distribution can be built & installed
- - export SRC_TGZ=$(cabal-1.20 info . | awk '{print $2 ".tar.gz";exit}') ;
-   (cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
+  # check that the generated source-distribution can be built & installed
+  - export SRC_TGZ=$(cabal-1.20 info . | awk '{print $2 ".tar.gz";exit}') ;
+    (cd dist/;
+    if [ -f "$SRC_TGZ" ]; then
       cabal-1.20 install "$SRC_TGZ";
-   else
+    else
       echo "expected '$SRC_TGZ' not found";
       exit 1;
-   fi)
+    fi)
 
 after_script:
   - hpc-coveralls db-test-suite
