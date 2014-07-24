@@ -4,28 +4,33 @@
 module Database.Neo4j.Types
   ( 
     Server(..)
-  , Value(..)
+  , DValue(..)
   ) where
+
+import Control.Applicative ((<$>))
 
 import Data.Text (Text)
 import Data.Data (Data)
 import Data.Int (Int64)
 import Data.Typeable (Typeable)
 
+import qualified Data.Vector as V
+
 import qualified Data.Aeson as A
 import Data.Scientific (toRealFloat, coefficient, base10Exponent)
 
-data Value
+data DValue
   = Int !Int64
   | Float !Double
   | String !Text
   | Bool !Bool
+  | DColl !(V.Vector DValue)
   | Null
   deriving (Eq, Show, Data, Typeable)
 
-instance A.FromJSON Value where
+instance A.FromJSON DValue where
   parseJSON (A.Object o) = fail $ "Unexpected object: " ++ show o
-  parseJSON (A.Array a) = fail $ "Unexpected array: " ++ show a
+  parseJSON (A.Array a) = DColl <$> V.mapM A.parseJSON a
   parseJSON (A.String xs) = return $ String xs
   parseJSON (A.Bool b) = return $ Bool b
   parseJSON A.Null = return Null
@@ -41,11 +46,12 @@ instance A.FromJSON Value where
           e = base10Exponent n
       maxInt = fromIntegral (maxBound :: Int64)
 
-instance A.ToJSON Value where
+instance A.ToJSON DValue where
   toJSON (Int n) = A.toJSON n
   toJSON (Float d) = A.toJSON d
   toJSON (String xs) = A.toJSON xs
   toJSON (Bool b) = A.toJSON b
+  toJSON (DColl xs) = A.Array (V.map A.toJSON xs)
   toJSON Null = A.Null
 
 

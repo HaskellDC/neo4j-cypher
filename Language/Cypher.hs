@@ -9,37 +9,40 @@ module Language.Cypher where
 import Data.List (intersperse)
 import Data.Monoid (Monoid (..), (<>))
 import Data.String (IsString (fromString))
+import Data.Text (Text)
+
+import qualified Data.Vector as V
+
+import Database.Neo4j.Types (DValue (..))
 
 data CType = 
     Number | Boolean | Str
   | Identifier
   | Collection CType
 
-data DValue = DNum Double | DBool Bool | DStr String | DColl [DValue]
-  deriving (Eq, Show)
-
 class Convert (a :: CType) where
   data Value a :: * 
   convert :: DValue -> Maybe (Value a)
 
 instance Convert Number where
-  data Value Number = VNum Double deriving Show
-  convert (DNum x) = Just $ VNum x
+  newtype Value Number = VNum Double deriving (Eq, Show, Ord)
+  convert (Int x) = Just $ VNum (fromIntegral x)
+  convert (Float x) = Just $ VNum x
   convert _ = Nothing
 
 instance Convert Str where
-  data Value Str = VStr String deriving Show
-  convert (DStr x) = Just $ VStr x
+  newtype Value Str = VStr Text deriving (Eq, Show, Ord)
+  convert (String x) = Just $ VStr x
   convert _ = Nothing
 
 instance Convert Boolean where
-  data Value Boolean = VBool Bool deriving Show
-  convert (DBool x) = Just $ VBool x
+  newtype Value Boolean = VBool Bool deriving (Eq, Show, Ord)
+  convert (Bool x) = Just $ VBool x
   convert _ = Nothing
 
 instance Convert a => Convert (Collection a) where
-  data Value (Collection a) = VColl [Value a]
-  convert (DColl xs) = fmap VColl $ mapM convert xs
+  newtype Value (Collection a) = VColl (V.Vector (Value a))
+  convert (DColl xs) = fmap VColl $ V.mapM convert xs
   convert _ = Nothing
 
 instance Show (Value a) => Show (Value (Collection a)) where
@@ -208,6 +211,7 @@ data Query (l :: [CType]) where
    -> Query xs
   QUnion :: Bool -> Query xs -> Query xs -> Query xs
 
+infixr 5 :::
 data HList f (as :: [CType]) where
   HNil :: HList f '[]
   (:::) :: f a -> HList f as -> HList f (a ': as)
@@ -215,8 +219,14 @@ data HList f (as :: [CType]) where
 instance Show (HList f '[]) where
   show HNil = "HNil"
 
+instance Eq (HList f '[]) where
+  HNil == HNil = True
+
 instance (Show (f a), Show (HList f as)) => Show (HList f (a ': as)) where
   show (x ::: xs) = show x ++ " ::: " ++ show xs
+
+instance (Eq (f a), Eq (HList f as)) => Eq (HList f (a ': as)) where
+  (x ::: xs) == (y ::: ys) = x == y && xs == ys
 
 foldrHList :: (forall a. E a -> b -> b) -> b -> HList E xs -> b
 foldrHList _ z HNil = z
@@ -244,8 +254,8 @@ instance (Convert a, ConvertL as) => ConvertL (a ': as) where
 
 dresult :: [[DValue]]
 dresult = 
-  [ [DNum 3 , DBool True , DStr "Hi!", DColl [DNum 3, DNum 4]]
-  , [DNum 15, DBool False, DStr "HaskellDC", DColl []]
+  [ [Float 3 , Bool True , String "Hi!", DColl (V.fromList [Float 3, Float 4])]
+  , [Float 15, Bool False, String "HaskellDC", DColl V.empty]
   ]
 -- an example of converting to our heterogenous list
 typedResult :: [HList Value [Number, Boolean, Str, Collection Number]]
