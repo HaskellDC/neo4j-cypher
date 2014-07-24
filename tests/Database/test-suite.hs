@@ -44,16 +44,8 @@ case_queryRaw = do
   res <- queryDBRaw localServer simpleQuery
   res @?= Right "{\"results\":[{\"columns\":[\"1\"],\"data\":[{\"row\":[1]}]}],\"errors\":[]}"
 
--- this doesn't work yet.
---case_querySingle :: Assertion
---case_querySingle = do
---  res <- queryDB localServer simpleQuery
---  return ()
---  res @?= Right [CTInt 1]
-
-
-queryDBTest :: Assertion
-queryDBTest = do
+case_queryDBTest :: Assertion
+case_queryDBTest = do
   res <- queryDB localServer query :: IO (Either String (QueryResult [Str, Number]))
   res @?= Right (QueryResult ["r.move","(n.score) - (m.score)"] 
     [VStr "b6d5" ::: VNum 773.0 ::: HNil,VStr "g7d4" ::: VNum 549.0 ::: HNil

@@ -13,7 +13,7 @@ before_install:
   - sudo apt-get install cabal-install-1.20 ghc-$GHCVER
   - export PATH=/opt/ghc/$GHCVER/bin:~/.cabal/bin:$PATH
   - cabal-1.20 update
-  # install hpc-coveralls and happy
+  # install hpc-coveralls
   - cabal-1.20 sandbox init
   - cabal-1.20 install hpc-coveralls -j --bindir=$HOME/.cabal/bin/ --constraint='aeson >= 0.7'
   - cabal-1.20 sandbox delete
@@ -23,6 +23,7 @@ before_install:
   - neo4j-community-$NEOVER/bin/neo4j start
 
 install:
+  # install happy -- needed for hlint
   - cabal-1.20 install happy -j --bindir=$HOME/.cabal/bin/
   - cabal-1.20 install -j --only-dependencies --enable-tests --enable-benchmarks
 
