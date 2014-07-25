@@ -52,14 +52,6 @@ queryDBRaw server query = fmap (fmap H.rspBody) (H.simpleHTTP request)
               ]
     request = H.Request uri H.POST headers body
 
---queryDB :: Server -> Query -> IO (H.Result Value)
---queryDB s q = (d (queryDBRaw s q)) ^. AL.key (pack "results") . AL.key (pack "data") . AL.key (pack "row") . AL.nth 0
---  where
---    d str = A.decode str :: IO (H.Result Value)
-
-
-
-
 queryDB :: ConvertL xs => Server -> Query xs -> IO (Either String (QueryResult xs))
 queryDB server = fmap f . queryDBRaw server . writeQuery where
   f (Left connError) = Left $ show connError 
