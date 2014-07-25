@@ -21,6 +21,7 @@ before_install:
   - wget dist.neo4j.org/neo4j-community-$NEOVER-unix.tar.gz
   - tar -xzf neo4j-community-$NEOVER-unix.tar.gz
   - neo4j-community-$NEOVER/bin/neo4j start
+  - neo4j-community-$NEOVER/bin/neo4j-shell -file testdata.cypher
 
 install:
   # install happy -- needed for hlint

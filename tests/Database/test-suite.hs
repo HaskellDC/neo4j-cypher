@@ -48,11 +48,11 @@ case_queryDBTest :: Assertion
 case_queryDBTest = do
   res <- queryDB localServer query :: IO (Either String (QueryResult [Str, Number]))
   res @?= Right (QueryResult ["r.move","(n.score) - (m.score)"] 
-    [VStr "b6d5" ::: VNum 773.0 ::: HNil,VStr "g7d4" ::: VNum 549.0 ::: HNil
-    ,VStr "b6a8" ::: VNum 950.0 ::: HNil,VStr "g7e5" ::: VNum 520.0 ::: HNil
-    ,VStr "b6c8" ::: VNum 463.0 ::: HNil,VStr "b6a4" ::: VNum 327.0 ::: HNil
-    ,VStr "d7d5" ::: VNum 218.0 ::: HNil,VStr "a6a5" ::: VNum 156.0 ::: HNil
-    ,VStr "b7a7" ::: VNum 154.0 ::: HNil,VStr "b7c7" ::: VNum 154.0 ::: HNil])
+    [VStr "g8f6" ::: VNum 80.0 ::: HNil,VStr "e7e5" ::: VNum 78.0 ::: HNil,
+     VStr "g8f6" ::: VNum 59.0 ::: HNil,VStr "c1f4" ::: VNum (-23.0) ::: HNil,
+     VStr "e7e6" ::: VNum (-32.0) ::: HNil,VStr "e7e6" ::: VNum 14.0 ::: HNil,
+     VStr "e2e3" ::: VNum 32.0 ::: HNil,VStr "b1c3" ::: VNum 55.0 ::: HNil,
+     VStr "b1d2" ::: VNum 6.0 ::: HNil,VStr "e7e6" ::: VNum 7.0 ::: HNil])
   where
   query = QMatch pattern ret (Nothing :: Maybe (E Number)) Nothing (Just 10)
   pattern = PRel (node m) (node n) (OneEdge (Just r)) RelRight [] ["NEXT"]
