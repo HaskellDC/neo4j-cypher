@@ -17,6 +17,7 @@ tokens :-
   [\+\-\*\=]                    { Operator }
   \.                            { const Dot }
   :                             { const Colon }
+  \,                            { const Comma }
   \(                            { const $ Paren L }
   \)                            { const $ Paren R }
   \[                            { const $ Bracket L }
@@ -38,6 +39,7 @@ data Token =
   | Brace Side
   | Dot
   | Colon
+  | Comma
   deriving Show
 
 data Side = L | R deriving Show
