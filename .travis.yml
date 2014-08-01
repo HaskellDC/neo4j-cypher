@@ -24,7 +24,9 @@ before_install:
   - neo4j-community-$NEOVER/bin/neo4j-shell -file testdata.cypher
 
 install:
-  # install happy -- needed for hlint
+  # install happy -- needed for hlint and dsl parsing
+  - cabal-1.20 install happy -j --bindir=$HOME/.cabal/bin/
+  # install alex -- needed for dsl parsing
   - cabal-1.20 install happy -j --bindir=$HOME/.cabal/bin/
   - cabal-1.20 install -j --only-dependencies --enable-tests --enable-benchmarks
 
