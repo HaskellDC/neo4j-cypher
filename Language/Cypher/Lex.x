@@ -1,4 +1,5 @@
 {
+{-# OPTIONS_GHC -w #-}
 module Language.Cypher.Lex (runLex, Token (..), Side (..)) where
 }
 
