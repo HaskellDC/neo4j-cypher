@@ -25,11 +25,12 @@ data DValue
   | String !Text
   | Bool !Bool
   | DColl !(V.Vector DValue)
+  | DObj !A.Object
   | Null
   deriving (Eq, Show, Data, Typeable)
 
 instance A.FromJSON DValue where
-  parseJSON (A.Object o) = fail $ "Unexpected object: " ++ show o
+  parseJSON (A.Object o) = return $ DObj o
   parseJSON (A.Array a) = DColl <$> V.mapM A.parseJSON a
   parseJSON (A.String xs) = return $ String xs
   parseJSON (A.Bool b) = return $ Bool b
@@ -51,6 +52,7 @@ instance A.ToJSON DValue where
   toJSON (Float d) = A.toJSON d
   toJSON (String xs) = A.toJSON xs
   toJSON (Bool b) = A.toJSON b
+  toJSON (DObj o) = A.Object o
   toJSON (DColl xs) = A.Array (V.map A.toJSON xs)
   toJSON Null = A.Null
 

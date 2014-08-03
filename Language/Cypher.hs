@@ -6,6 +6,8 @@
 
 module Language.Cypher where
 
+
+import qualified Data.Aeson as A
 import Data.List (intersperse)
 import Data.Monoid (Monoid (..), (<>))
 import Data.String (IsString (fromString))
@@ -40,6 +42,11 @@ instance Convert Boolean where
   convert (Bool x) = Just $ VBool x
   convert _ = Nothing
 
+instance Convert Identifier where
+  newtype Value Identifier = VIdent A.Object deriving (Eq, Show)
+  convert (DObj o) = Just $ VIdent o
+  convert _ = Nothing
+
 instance Convert a => Convert (Collection a) where
   newtype Value (Collection a) = VColl (V.Vector (Value a))
   convert (DColl xs) = fmap VColl $ V.mapM convert xs
@@ -49,6 +56,10 @@ instance Show (Value a) => Show (Value (Collection a)) where
   show (VColl xs) = "VColl " ++ show xs
 
 class Case (a :: CType)
+instance Case Number
+instance Case Str
+instance Case Boolean
+
 class EOrd (a :: CType)
 instance EOrd Number
 
@@ -202,8 +213,8 @@ data Pattern =
   | PAnd Pattern Pattern
  
 data Query (l :: [CType]) where
-  QMatch :: EOrd ord =>
-      Pattern -- ^ match
+  QReturn :: EOrd ord =>
+      Maybe Pattern -- ^ match
    -> HList E xs -- ^ return
    -> Maybe (E ord) -- ^ order by
    -> Maybe Int -- ^ skip
@@ -263,9 +274,9 @@ Just typedResult = mapM convertl dresult
 
 writeQuery :: (Monoid s, IsString s) => Query xs -> s
 writeQuery query = case query of
-  QMatch match ret orderBy skip limit -> 
-    "MATCH " <> writePattern match <> " RETURN " 
-    <> mconcat (intersperse ", " (mapHList writeExp ret))
+  QReturn match ret orderBy skip limit -> 
+    perhaps (\m -> "MATCH " <> writePattern m) match
+    <> " RETURN " <> mconcat (intersperse ", " (mapHList writeExp ret))
     <> perhaps (\o -> " ORDER BY " <> writeExp o) orderBy
     <> perhaps (\s -> " SKIP " <> sho s) skip
     <> perhaps (\l -> " LIMIT " <> sho l) limit
@@ -275,5 +286,5 @@ writeQuery query = case query of
 
 simpleMatch :: Pattern -> HList E xs -> Query xs
 simpleMatch match ret = 
-  QMatch match ret (Nothing :: Maybe (E Number)) Nothing Nothing
+  QReturn (Just match) ret (Nothing :: Maybe (E Number)) Nothing Nothing
 

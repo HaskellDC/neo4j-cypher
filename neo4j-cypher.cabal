@@ -19,17 +19,21 @@ description:         Haskell client library for Neo4j, focusing on Cypher
 
 library
   exposed-modules:     Language.Cypher
+                       Language.Cypher.Lex
+                       Language.Cypher.Parse
                        Database.Neo4j
                        Database.Neo4j.Types
   -- other-modules:       
   other-extensions:    GADTs, DataKinds
   build-depends:       base >=4.6 && <4.8,
                        aeson >=0.7 && <0.9,
+                       array >= 0.4 && <0.6,
                        bytestring >=0.10 && <0.11,
                        HTTP >=4000.2 && <4000.3,
                        network >=2.4 && <2.6,
-                       text >=1.1.0.0 && <1.2,
                        scientific >=0.3 &&<0.4,
+                       template-haskell >=2.8 && <2.10,
+                       text >=0.11 && <1.2,
                        vector >=0.10 && <0.11
   -- hs-source-dirs:      
   default-language:    Haskell2010
