@@ -137,6 +137,7 @@ writeExp e = case e of
   EBool    b -> sho b
   EString  s -> sho s
   EIdent   i -> fromString i
+  EParam   p -> "{" <> fromString p <> "}"
   EProp  i p -> writeExp i <> "." <> fromString p
 
   EColl xs -> sqbrack . mconcat . intersperse "," $
@@ -199,6 +200,7 @@ data E :: CType -> * where
   EBool     :: Bool -> E Boolean
   EString   :: String -> E Str
   EIdent    :: String -> E Identifier
+  EParam    :: String -> E a
 
   EProp     :: E Identifier -> String -> E a
   EColl     :: [E a] -> E (Collection a)

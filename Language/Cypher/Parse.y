@@ -9,7 +9,7 @@ import Data.Char (toLower)
 import Language.Cypher
 import Language.Cypher.Lex
 
-import Language.Haskell.TH hiding (QReturn)
+import Language.Haskell.TH hiding (QReturn, Match)
 
 import Language.Haskell.Meta.Parse.Careful
 }
@@ -30,32 +30,48 @@ import Language.Haskell.Meta.Parse.Careful
   ','              { Comma }
   int              { Int $$ }
   antiquoted       { AntiQuote $$ }
-  match            { Name x | map toLower x == "match"  }
-  return           { Name x | map toLower x == "return" }
-  limit            { Name x | map toLower x == "limit"  }
-  order            { Name x | map toLower x == "order"  }
-  by               { Name x | map toLower x == "by"     }
-  skip             { Name x | map toLower x == "skip"   }
-  union            { Name x | map toLower x == "union"  }
-  all              { Name x | map toLower x == "all"    }
-  end              { Name x | map toLower x == "end"    }
-  case             { Name x | map toLower x == "case"   }
-  when             { Name x | map toLower x == "when"   }
-  then             { Name x | map toLower x == "then"   }
-  else             { Name x | map toLower x == "else"   }
+  match            { Name x | map toLower x == "match"    }
+  where            { Name x | map toLower x == "where"    }
+  optional         { Name x | map toLower x == "optional" }
+  return           { Name x | map toLower x == "return"   }
+  limit            { Name x | map toLower x == "limit"    }
+  order            { Name x | map toLower x == "order"    }
+  by               { Name x | map toLower x == "by"       }
+  skip             { Name x | map toLower x == "skip"     }
+  union            { Name x | map toLower x == "union"    }
+  all              { Name x | map toLower x == "all"      }
+  end              { Name x | map toLower x == "end"      }
+  case             { Name x | map toLower x == "case"     }
+  when             { Name x | map toLower x == "when"     }
+  then             { Name x | map toLower x == "then"     }
+  else             { Name x | map toLower x == "else"     }
   name             { Name $$ }
 
 %%
 
 Query :: { Q Exp }
-  : Match return RetClause OrderBy Skip Limit {  
+  : Matches return RetClause OrderBy Skip Limit {  
     [| QReturn $($1) $($3) $($4) $5 $6 |] }
   | Query union Query     { [| QUnion False $($1) $($3) |] }
   | Query union all Query { [| QUnion True $($1) $($4) |] } 
 
+MatchType :: { Q Exp }
+  : match { [| RequiredMatch |] }
+  | optional match { [| OptionalMatch |] }
+
+Matches :: { Q Exp }
+  :   { [| [] |] }
+  | Match Matches { [| $($1) : $($2) |] }
+
 Match :: { Q Exp }
-  :                { [| Nothing    |] }
-  | match Pattern  { [| Just $($2) |] }
+  : MatchType Pattern MWhere    {  [| Match $($1) $($2) $($3) |] }
+
+MWhere :: { Q Exp }
+  :                      { [| Nothing |] }
+  | Where                { [| Just $($1) |] }
+
+Where :: { Q Exp }
+  : where Exp { [| Where $($2) |] }
 
 Limit :: { Maybe Int }
   :             { Nothing }
