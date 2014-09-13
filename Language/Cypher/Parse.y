@@ -32,9 +32,11 @@ import Language.Haskell.Meta.Parse.Careful
   '-'              { Operator "-" }
   '*'              { Operator "*" }
   '/'              { Operator "/" }
+  '=~'             { Operator "=~" }
   int              { Int $$ }
   antiquoted       { AntiQuote $$ }
   match            { Name x | map toLower x == "match"    }
+  as               { Name x | map toLower x == "as"       }
   where            { Name x | map toLower x == "where"    }
   optional         { Name x | map toLower x == "optional" }
   return           { Name x | map toLower x == "return"   }
@@ -112,6 +114,7 @@ Exp :: { Q Exp }
   | Exp '-' Exp            { [| EMinus $($1) $($3) |] }
   | Exp '*' Exp            { [| ETimes $($1) $($3) |] }
   | Exp '/' Exp            { [| EDiv $($1) $($3) |] }
+  | Exp '=~' Exp           { [| ERegExpEQ $($1) $($3) |] }
   | SCase                  { $1 }
   | GCase                  { $1 }
   | antiquoted             { case parseExp $1 of Right e -> return e; Left err -> error err }
@@ -129,6 +132,8 @@ Whens :: { Q Exp }
 When :: { Q Exp }
   : when Exp then Exp    { [| ( $($2), $($4) ) |] }
 
+As :: { Q Exp }
+  : Exp as name { [| EAs $($1) $3 |] }
 
 Else :: { Q Exp }
   :            { [| Nothing |] }
@@ -137,6 +142,6 @@ Else :: { Q Exp }
 {
 
 parseError :: [Token] -> a
-parseError _ = error "Parse error"
+parseError toks = error ("Parse error: " ++ show toks)
 
 }
