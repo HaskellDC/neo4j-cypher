@@ -28,6 +28,10 @@ import Language.Haskell.Meta.Parse.Careful
   '.'              { Dot }
   ':'              { Colon }
   ','              { Comma }
+  '+'              { Operator "+" }
+  '-'              { Operator "-" }
+  '*'              { Operator "*" }
+  '/'              { Operator "/" }
   int              { Int $$ }
   antiquoted       { AntiQuote $$ }
   match            { Name x | map toLower x == "match"    }
@@ -46,6 +50,9 @@ import Language.Haskell.Meta.Parse.Careful
   then             { Name x | map toLower x == "then"     }
   else             { Name x | map toLower x == "else"     }
   name             { Name $$ }
+
+%left '+' '-'
+%left '*' '/'
 
 %%
 
@@ -101,6 +108,10 @@ Exp :: { Q Exp }
   | name '.' name          { [| EProp (EIdent $1) $3 |] }
   | int                    { [| EInt (fromIntegral ($1 :: Integer)) |] }
   | '(' Exp ')'            { $2 }
+  | Exp '+' Exp            { [| EPlus $($1) $($3) |] }
+  | Exp '-' Exp            { [| EMinus $($1) $($3) |] }
+  | Exp '*' Exp            { [| ETimes $($1) $($3) |] }
+  | Exp '/' Exp            { [| EDiv $($1) $($3) |] }
   | SCase                  { $1 }
   | GCase                  { $1 }
   | antiquoted             { case parseExp $1 of Right e -> return e; Left err -> error err }
