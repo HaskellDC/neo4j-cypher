@@ -19,6 +19,7 @@ tokens :-
   \.                            { const Dot }
   :                             { const Colon }
   \,                            { const Comma }
+  \$([^\$]+)\$                  { AntiQuote }
   \(                            { const $ Paren L }
   \)                            { const $ Paren R }
   \[                            { const $ Bracket L }
@@ -41,6 +42,7 @@ data Token =
   | Dot
   | Colon
   | Comma
+  | AntiQuote String
   deriving Show
 
 data Side = L | R deriving Show

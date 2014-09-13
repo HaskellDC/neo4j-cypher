@@ -10,6 +10,8 @@ import Language.Cypher
 import Language.Cypher.Lex
 
 import Language.Haskell.TH hiding (QReturn)
+
+import Language.Haskell.Meta.Parse.Careful
 }
 
 %name parse
@@ -27,6 +29,7 @@ import Language.Haskell.TH hiding (QReturn)
   ':'              { Colon }
   ','              { Comma }
   int              { Int $$ }
+  antiquoted       { AntiQuote $$ }
   match            { Name x | map toLower x == "match"  }
   return           { Name x | map toLower x == "return" }
   limit            { Name x | map toLower x == "limit"  }
@@ -84,6 +87,7 @@ Exp :: { Q Exp }
   | '(' Exp ')'            { $2 }
   | SCase                  { $1 }
   | GCase                  { $1 }
+  | antiquoted             { case parseExp $1 of Right e -> return e }
 
 SCase :: { Q Exp }
   : case Exp Whens Else end { [| ESCase $($2) $($3) $($4) |] }
