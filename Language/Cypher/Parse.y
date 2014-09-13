@@ -99,14 +99,20 @@ Pattern :: { Q Exp }
 
 Node :: { Q Exp }
   : name { [| PNode (Just (EIdent $1)) [] [] |] }
+  | name ':' name { [| PNode (Just (EIdent $1)) [] [Label $3] |] } 
   | '(' Node ')'   { $2 }
 
+RetExp :: { Q Exp }
+  : Exp { [| RetE $($1) |] }
+  | As { [| RetEAs $($1) |] }
+
 RetClause :: { Q Exp }
-  : Exp                  { [| $($1) ::: HNil |] }
-  | Exp ',' RetClause    { [| $($1) ::: $($3) |] }
+  : RetExp                  { [| $($1) ::: HNil |] }
+  | RetExp ',' RetClause    { [| $($1) ::: $($3) |] }
 
 Exp :: { Q Exp }
   : name                   { [| EIdent $1 |] }
+  | '{' name '}'           { [| EParam $2 |] }
   | name '.' name          { [| EProp (EIdent $1) $3 |] }
   | int                    { [| EInt (fromIntegral ($1 :: Integer)) |] }
   | '(' Exp ')'            { $2 }

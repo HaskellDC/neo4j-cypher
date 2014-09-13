@@ -17,8 +17,8 @@ query = [cypher| return case $ x - 1 $ when 0 then $ x $ else 2 end limit 1|]
 query2 :: Query '[Str, Str, Number]
 query2 = [cypher|
       MATCH (movie:Movie)
+      WHERE movie.title =~ {zero}
       RETURN movie.title as title, movie.tagline as tagline, movie.released as released|]
-      {-WHERE movie.title =~ {0}-}
 
 main :: IO ()
 main = do

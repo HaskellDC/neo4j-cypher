@@ -263,7 +263,7 @@ writeMatchType x = case x of
 
 writeMatch :: (IsString s, Monoid s) => Match -> s
 writeMatch (Match mt pat mwhere) = writeMatchType mt
-  <> " " <> writePattern pat <> perhaps writeWhere mwhere
+  <> " " <> writePattern pat <> perhaps (\w -> " " <> writeWhere w) mwhere
 
 class WhereExp (e :: CType)
 instance WhereExp Boolean
@@ -279,7 +279,7 @@ writeWhere (Where expr) = "WHERE " <> writeExp expr
 data Query (l :: [CType]) where
   QReturn :: EOrd ord =>
       [Match] -- ^ matches
-   -> HList E xs -- ^ return
+   -> HList RetE xs -- ^ return
    -> Maybe (E ord) -- ^ order by
    -> Maybe Int -- ^ skip
    -> Maybe Int -- ^ limit
@@ -304,11 +304,11 @@ instance (Show (f a), Show (HList f as)) => Show (HList f (a ': as)) where
 instance (Eq (f a), Eq (HList f as)) => Eq (HList f (a ': as)) where
   (x ::: xs) == (y ::: ys) = x == y && xs == ys
 
-foldrHList :: (forall a. E a -> b -> b) -> b -> HList E xs -> b
+foldrHList :: (forall a. RetE a -> b -> b) -> b -> HList RetE xs -> b
 foldrHList _ z HNil = z
 foldrHList f z (x ::: xs) = f x (foldrHList f z xs)
 
-mapHList :: (forall a. E a -> b) -> HList E xs -> [b]
+mapHList :: (forall a. RetE a -> b) -> HList RetE xs -> [b]
 mapHList f = foldrHList ((:) . f) []
 
 instance Show (Query xs) where
@@ -341,7 +341,7 @@ writeQuery :: (Monoid s, IsString s) => Query xs -> s
 writeQuery query = case query of
   QReturn matches ret orderBy skip limit -> 
     mconcat (map writeMatch matches)
-    <> " RETURN " <> mconcat (intersperse ", " (mapHList writeExp ret))
+    <> " RETURN " <> mconcat (intersperse ", " (mapHList writeRetE ret))
     <> perhaps (\o -> " ORDER BY " <> writeExp o) orderBy
     <> perhaps (\s -> " SKIP " <> sho s) skip
     <> perhaps (\l -> " LIMIT " <> sho l) limit
@@ -351,7 +351,7 @@ writeQuery query = case query of
   QWith asExpr q ->
     "WITH " <> writeAs asExpr <> writeQuery q
 
-simpleMatch :: Pattern -> HList E xs -> Query xs
+simpleMatch :: Pattern -> HList RetE xs -> Query xs
 simpleMatch matchPat ret = 
   QReturn [Match RequiredMatch matchPat Nothing]
     ret (Nothing :: Maybe (E Number)) Nothing Nothing
