@@ -87,7 +87,7 @@ Exp :: { Q Exp }
   | '(' Exp ')'            { $2 }
   | SCase                  { $1 }
   | GCase                  { $1 }
-  | antiquoted             { case parseExp $1 of Right e -> return e }
+  | antiquoted             { case parseExp $1 of Right e -> return e; Left err -> error err }
 
 SCase :: { Q Exp }
   : case Exp Whens Else end { [| ESCase $($2) $($3) $($4) |] }

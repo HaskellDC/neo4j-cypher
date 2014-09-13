@@ -19,7 +19,7 @@ tokens :-
   \.                            { const Dot }
   :                             { const Colon }
   \,                            { const Comma }
-  \$([^\$]+)\$                  { AntiQuote }
+  \$([^\$]+)\$                  { AntiQuote . init . tail }
   \(                            { const $ Paren L }
   \)                            { const $ Paren R }
   \[                            { const $ Bracket L }

@@ -21,6 +21,7 @@ library
   exposed-modules:     Language.Cypher
                        Language.Cypher.Lex
                        Language.Cypher.Parse
+                       Language.Cypher.Quasiquoter
                        Database.Neo4j
                        Database.Neo4j.Types
   -- other-modules:       

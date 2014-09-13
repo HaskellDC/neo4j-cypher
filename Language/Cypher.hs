@@ -182,6 +182,13 @@ paren = bracket "(" ")"
 data Assoc :: * where
   Assoc :: String -> E a -> Assoc
 
+instance Num (E Number) where
+  x + y = EPlus x y
+  x * y = ETimes x y
+  x - y = EMinus x y
+  negate x = EMinus (EDouble 0) x
+  fromInteger x = EInt (fromIntegral x)
+
 data E :: CType -> * where
   -- literals
   EInt      :: Int -> E Number
@@ -221,6 +228,7 @@ data Query (l :: [CType]) where
    -> Maybe Int -- ^ limit
    -> Query xs
   QUnion :: Bool -> Query xs -> Query xs -> Query xs
+  QWith :: E a -> String -> Query xs -> Query xs
 
 infixr 5 :::
 data HList f (as :: [CType]) where
