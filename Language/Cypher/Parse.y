@@ -28,7 +28,8 @@ import Language.Haskell.TH hiding (QReturn)
   ','              { Comma }
   int              { Int $$ }
   match            { Name x | map toLower x == "match"  }
-  return           { Name x | map toLower x == "return" }
+  return           { Name x | map toLower x == "distinct" }
+  distinct         { Name x | map toLower x == "return" }
   limit            { Name x | map toLower x == "limit"  }
   order            { Name x | map toLower x == "order"  }
   by               { Name x | map toLower x == "by"     }
