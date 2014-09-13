@@ -162,6 +162,9 @@ writeExp e = case e of
   EGT  l r -> binOp ">"  l r
   EGTE l r -> binOp ">=" l r
 
+  EEQ l r -> binOp "=" l r
+  ERegExpEQ l r -> binOp "=~" l r
+
   EConcat l r -> binOp "+" l r
   EConcatStr l r -> binOp "+" l r
 
@@ -219,7 +222,16 @@ data E :: CType -> * where
   EConcat :: E (Collection a) -> E (Collection a) -> E (Collection a)
   ELT, ELTE, EGT, EGTE :: EOrd a => E a -> E a -> E Boolean
 
+  EEQ :: EEq a => E a -> E a -> E Boolean
+  ERegExpEQ :: E Str -> E Str -> E Boolean
+
   EPattern :: Pattern -> E CPattern
+
+class EEq (a :: CType) where
+
+instance EEq Str
+instance EEq Number
+instance EEq Boolean
 
 data EAs :: CType -> * where
   EAs :: E a -> String -> EAs a
@@ -261,7 +273,7 @@ data Where where
   Where :: WhereExp e => E e -> Where
 
 writeWhere :: (IsString s, Monoid s) => Where -> s
-writeWhere (Where exp) = "WHERE " <> writeExp exp
+writeWhere (Where expr) = "WHERE " <> writeExp expr
 
  
 data Query (l :: [CType]) where
