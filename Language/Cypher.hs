@@ -21,6 +21,7 @@ data CType =
     Number | Boolean | Str
   | Identifier
   | Collection CType
+  | CPattern
 
 class Convert (a :: CType) where
   data Value a :: * 
@@ -167,6 +168,8 @@ writeExp e = case e of
   ESCase test cases def -> "CASE " <> writeExp test <> " "
     <> writeCases cases def
   EGCase cases def -> "CASE " <> writeCases cases def
+
+  EPattern pat -> writePattern pat
   where
   binOp :: (Monoid s, IsString s) => s -> E a -> E b -> s
   binOp op l r = paren (writeExp l) <> " " <> op 
@@ -214,21 +217,61 @@ data E :: CType -> * where
   EConcat :: E (Collection a) -> E (Collection a) -> E (Collection a)
   ELT, ELTE, EGT, EGTE :: EOrd a => E a -> E a -> E Boolean
 
+  EPattern :: Pattern -> E CPattern
+
+data EAs :: CType -> * where
+  EAs :: E a -> String -> EAs a
+
+data RetE :: CType -> * where
+  RetE :: E a -> RetE a
+  RetEAs :: EAs a -> RetE a
+
+writeAs :: (IsString s, Monoid s) => EAs a -> s
+writeAs (EAs expr name) = writeExp expr <> " AS " <> fromString name
+
+writeRetE :: (IsString s, Monoid s) => RetE a -> s
+writeRetE x = case x of
+  RetE e -> writeExp e
+  RetEAs e -> writeAs e
+
 data Pattern =
     PNode (Maybe (E Identifier)) [Assoc] [Label]
   | PRel Pattern Pattern RelInfo RelDirection [Assoc] [RelType]
   | PAnd Pattern Pattern
+
+data MatchType = RequiredMatch | OptionalMatch
+data Match = Match MatchType Pattern (Maybe Where)
+
+writeMatchType :: (IsString s, Monoid s) => MatchType -> s
+writeMatchType x = case x of
+  RequiredMatch -> "MATCH"
+  OptionalMatch -> "OPTIONAL MATCH"
+
+writeMatch :: (IsString s, Monoid s) => Match -> s
+writeMatch (Match mt pat mwhere) = writeMatchType mt
+  <> " " <> writePattern pat <> perhaps writeWhere mwhere
+
+class WhereExp (e :: CType)
+instance WhereExp Boolean
+instance WhereExp CPattern
+
+data Where where
+  Where :: WhereExp e => E e -> Where
+
+writeWhere :: (IsString s, Monoid s) => Where -> s
+writeWhere (Where exp) = "WHERE " <> writeExp exp
+
  
 data Query (l :: [CType]) where
   QReturn :: EOrd ord =>
-      Maybe Pattern -- ^ match
+      [Match] -- ^ matches
    -> HList E xs -- ^ return
    -> Maybe (E ord) -- ^ order by
    -> Maybe Int -- ^ skip
    -> Maybe Int -- ^ limit
    -> Query xs
   QUnion :: Bool -> Query xs -> Query xs -> Query xs
-  QWith :: E a -> String -> Query xs -> Query xs
+  QWith :: EAs a -> Query xs -> Query xs
 
 infixr 5 :::
 data HList f (as :: [CType]) where
@@ -282,8 +325,8 @@ Just typedResult = mapM convertl dresult
 
 writeQuery :: (Monoid s, IsString s) => Query xs -> s
 writeQuery query = case query of
-  QReturn match ret orderBy skip limit -> 
-    perhaps (\m -> "MATCH " <> writePattern m) match
+  QReturn matches ret orderBy skip limit -> 
+    mconcat (map writeMatch matches)
     <> " RETURN " <> mconcat (intersperse ", " (mapHList writeExp ret))
     <> perhaps (\o -> " ORDER BY " <> writeExp o) orderBy
     <> perhaps (\s -> " SKIP " <> sho s) skip
@@ -291,8 +334,11 @@ writeQuery query = case query of
   QUnion uall left right ->
     writeQuery left <> " UNION " <> (if uall then "ALL " else "")
     <> writeQuery right
+  QWith asExpr q ->
+    "WITH " <> writeAs asExpr <> writeQuery q
 
 simpleMatch :: Pattern -> HList E xs -> Query xs
-simpleMatch match ret = 
-  QReturn (Just match) ret (Nothing :: Maybe (E Number)) Nothing Nothing
+simpleMatch matchPat ret = 
+  QReturn [Match RequiredMatch matchPat Nothing]
+    ret (Nothing :: Maybe (E Number)) Nothing Nothing
 
