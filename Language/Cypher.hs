@@ -21,6 +21,7 @@ data CType =
     Number | Boolean | Str
   | Identifier
   | Collection CType
+  | CPattern
 
 class Convert (a :: CType) where
   data Value a :: * 
@@ -136,6 +137,7 @@ writeExp e = case e of
   EBool    b -> sho b
   EString  s -> sho s
   EIdent   i -> fromString i
+  EParam   p -> "{" <> fromString p <> "}"
   EProp  i p -> writeExp i <> "." <> fromString p
 
   EColl xs -> sqbrack . mconcat . intersperse "," $
@@ -160,6 +162,9 @@ writeExp e = case e of
   EGT  l r -> binOp ">"  l r
   EGTE l r -> binOp ">=" l r
 
+  EEQ l r -> binOp "=" l r
+  ERegExpEQ l r -> binOp "=~" l r
+
   EConcat l r -> binOp "+" l r
   EConcatStr l r -> binOp "+" l r
 
@@ -167,6 +172,8 @@ writeExp e = case e of
   ESCase test cases def -> "CASE " <> writeExp test <> " "
     <> writeCases cases def
   EGCase cases def -> "CASE " <> writeCases cases def
+
+  EPattern pat -> writePattern pat
   where
   binOp :: (Monoid s, IsString s) => s -> E a -> E b -> s
   binOp op l r = paren (writeExp l) <> " " <> op 
@@ -182,6 +189,13 @@ paren = bracket "(" ")"
 data Assoc :: * where
   Assoc :: String -> E a -> Assoc
 
+instance Num (E Number) where
+  x + y = EPlus x y
+  x * y = ETimes x y
+  x - y = EMinus x y
+  negate x = EMinus (EDouble 0) x
+  fromInteger x = EInt (fromIntegral x)
+
 data E :: CType -> * where
   -- literals
   EInt      :: Int -> E Number
@@ -189,6 +203,7 @@ data E :: CType -> * where
   EBool     :: Bool -> E Boolean
   EString   :: String -> E Str
   EIdent    :: String -> E Identifier
+  EParam    :: String -> E a
 
   EProp     :: E Identifier -> String -> E a
   EColl     :: [E a] -> E (Collection a)
@@ -207,20 +222,70 @@ data E :: CType -> * where
   EConcat :: E (Collection a) -> E (Collection a) -> E (Collection a)
   ELT, ELTE, EGT, EGTE :: EOrd a => E a -> E a -> E Boolean
 
+  EEQ :: EEq a => E a -> E a -> E Boolean
+  ERegExpEQ :: E Str -> E Str -> E Boolean
+
+  EPattern :: Pattern -> E CPattern
+
+class EEq (a :: CType) where
+
+instance EEq Str
+instance EEq Number
+instance EEq Boolean
+
+data EAs :: CType -> * where
+  EAs :: E a -> String -> EAs a
+
+data RetE :: CType -> * where
+  RetE :: E a -> RetE a
+  RetEAs :: EAs a -> RetE a
+
+writeAs :: (IsString s, Monoid s) => EAs a -> s
+writeAs (EAs expr name) = writeExp expr <> " AS " <> fromString name
+
+writeRetE :: (IsString s, Monoid s) => RetE a -> s
+writeRetE x = case x of
+  RetE e -> writeExp e
+  RetEAs e -> writeAs e
+
 data Pattern =
     PNode (Maybe (E Identifier)) [Assoc] [Label]
   | PRel Pattern Pattern RelInfo RelDirection [Assoc] [RelType]
   | PAnd Pattern Pattern
+
+data MatchType = RequiredMatch | OptionalMatch
+data Match = Match MatchType Pattern (Maybe Where)
+
+writeMatchType :: (IsString s, Monoid s) => MatchType -> s
+writeMatchType x = case x of
+  RequiredMatch -> "MATCH"
+  OptionalMatch -> "OPTIONAL MATCH"
+
+writeMatch :: (IsString s, Monoid s) => Match -> s
+writeMatch (Match mt pat mwhere) = writeMatchType mt
+  <> " " <> writePattern pat <> perhaps (\w -> " " <> writeWhere w) mwhere
+
+class WhereExp (e :: CType)
+instance WhereExp Boolean
+instance WhereExp CPattern
+
+data Where where
+  Where :: WhereExp e => E e -> Where
+
+writeWhere :: (IsString s, Monoid s) => Where -> s
+writeWhere (Where expr) = "WHERE " <> writeExp expr
+
  
 data Query (l :: [CType]) where
   QReturn :: EOrd ord =>
-      Maybe Pattern -- ^ match
-   -> HList E xs -- ^ return
+      [Match] -- ^ matches
+   -> HList RetE xs -- ^ return
    -> Maybe (E ord) -- ^ order by
    -> Maybe Int -- ^ skip
    -> Maybe Int -- ^ limit
    -> Query xs
   QUnion :: Bool -> Query xs -> Query xs -> Query xs
+  QWith :: EAs a -> Query xs -> Query xs
 
 infixr 5 :::
 data HList f (as :: [CType]) where
@@ -239,11 +304,11 @@ instance (Show (f a), Show (HList f as)) => Show (HList f (a ': as)) where
 instance (Eq (f a), Eq (HList f as)) => Eq (HList f (a ': as)) where
   (x ::: xs) == (y ::: ys) = x == y && xs == ys
 
-foldrHList :: (forall a. E a -> b -> b) -> b -> HList E xs -> b
+foldrHList :: (forall a. RetE a -> b -> b) -> b -> HList RetE xs -> b
 foldrHList _ z HNil = z
 foldrHList f z (x ::: xs) = f x (foldrHList f z xs)
 
-mapHList :: (forall a. E a -> b) -> HList E xs -> [b]
+mapHList :: (forall a. RetE a -> b) -> HList RetE xs -> [b]
 mapHList f = foldrHList ((:) . f) []
 
 instance Show (Query xs) where
@@ -274,17 +339,20 @@ Just typedResult = mapM convertl dresult
 
 writeQuery :: (Monoid s, IsString s) => Query xs -> s
 writeQuery query = case query of
-  QReturn match ret orderBy skip limit -> 
-    perhaps (\m -> "MATCH " <> writePattern m) match
-    <> " RETURN " <> mconcat (intersperse ", " (mapHList writeExp ret))
+  QReturn matches ret orderBy skip limit -> 
+    mconcat (map writeMatch matches)
+    <> " RETURN " <> mconcat (intersperse ", " (mapHList writeRetE ret))
     <> perhaps (\o -> " ORDER BY " <> writeExp o) orderBy
     <> perhaps (\s -> " SKIP " <> sho s) skip
     <> perhaps (\l -> " LIMIT " <> sho l) limit
   QUnion uall left right ->
     writeQuery left <> " UNION " <> (if uall then "ALL " else "")
     <> writeQuery right
+  QWith asExpr q ->
+    "WITH " <> writeAs asExpr <> writeQuery q
 
-simpleMatch :: Pattern -> HList E xs -> Query xs
-simpleMatch match ret = 
-  QReturn (Just match) ret (Nothing :: Maybe (E Number)) Nothing Nothing
+simpleMatch :: Pattern -> HList RetE xs -> Query xs
+simpleMatch matchPat ret = 
+  QReturn [Match RequiredMatch matchPat Nothing]
+    ret (Nothing :: Maybe (E Number)) Nothing Nothing
 

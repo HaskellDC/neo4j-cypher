@@ -21,6 +21,7 @@ library
   exposed-modules:     Language.Cypher
                        Language.Cypher.Lex
                        Language.Cypher.Parse
+                       Language.Cypher.Quasiquoter
                        Database.Neo4j
                        Database.Neo4j.Types
   -- other-modules:       
@@ -29,6 +30,7 @@ library
                        aeson >=0.7 && <0.9,
                        array >= 0.4 && <0.6,
                        bytestring >=0.10 && <0.11,
+                       haskell-src-meta >=0.6 && <0.7,
                        HTTP >=4000.2 && <4000.3,
                        network >=2.4 && <2.6,
                        scientific >=0.3 &&<0.4,

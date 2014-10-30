@@ -9,7 +9,9 @@ import Data.Char (toLower)
 import Language.Cypher
 import Language.Cypher.Lex
 
-import Language.Haskell.TH hiding (QReturn)
+import Language.Haskell.TH hiding (QReturn, Match)
+
+import Language.Haskell.Meta.Parse.Careful
 }
 
 %name parse
@@ -26,33 +28,59 @@ import Language.Haskell.TH hiding (QReturn)
   '.'              { Dot }
   ':'              { Colon }
   ','              { Comma }
+  '+'              { Operator "+" }
+  '-'              { Operator "-" }
+  '*'              { Operator "*" }
+  '/'              { Operator "/" }
+  '=~'             { Operator "=~" }
   int              { Int $$ }
-  match            { Name x | map toLower x == "match"  }
-  return           { Name x | map toLower x == "return" }
-  limit            { Name x | map toLower x == "limit"  }
-  order            { Name x | map toLower x == "order"  }
-  by               { Name x | map toLower x == "by"     }
-  skip             { Name x | map toLower x == "skip"   }
-  union            { Name x | map toLower x == "union"  }
-  all              { Name x | map toLower x == "all"    }
-  end              { Name x | map toLower x == "end"    }
-  case             { Name x | map toLower x == "case"   }
-  when             { Name x | map toLower x == "when"   }
-  then             { Name x | map toLower x == "then"   }
-  else             { Name x | map toLower x == "else"   }
+  antiquoted       { AntiQuote $$ }
+  match            { Name x | map toLower x == "match"    }
+  as               { Name x | map toLower x == "as"       }
+  where            { Name x | map toLower x == "where"    }
+  optional         { Name x | map toLower x == "optional" }
+  return           { Name x | map toLower x == "return"   }
+  limit            { Name x | map toLower x == "limit"    }
+  order            { Name x | map toLower x == "order"    }
+  by               { Name x | map toLower x == "by"       }
+  skip             { Name x | map toLower x == "skip"     }
+  union            { Name x | map toLower x == "union"    }
+  all              { Name x | map toLower x == "all"      }
+  end              { Name x | map toLower x == "end"      }
+  case             { Name x | map toLower x == "case"     }
+  when             { Name x | map toLower x == "when"     }
+  then             { Name x | map toLower x == "then"     }
+  else             { Name x | map toLower x == "else"     }
   name             { Name $$ }
+
+%left '+' '-'
+%left '*' '/'
 
 %%
 
 Query :: { Q Exp }
-  : Match return RetClause OrderBy Skip Limit {  
+  : Matches return RetClause OrderBy Skip Limit {  
     [| QReturn $($1) $($3) $($4) $5 $6 |] }
   | Query union Query     { [| QUnion False $($1) $($3) |] }
   | Query union all Query { [| QUnion True $($1) $($4) |] } 
 
+MatchType :: { Q Exp }
+  : match { [| RequiredMatch |] }
+  | optional match { [| OptionalMatch |] }
+
+Matches :: { Q Exp }
+  :   { [| [] |] }
+  | Match Matches { [| $($1) : $($2) |] }
+
 Match :: { Q Exp }
-  :                { [| Nothing    |] }
-  | match Pattern  { [| Just $($2) |] }
+  : MatchType Pattern MWhere    {  [| Match $($1) $($2) $($3) |] }
+
+MWhere :: { Q Exp }
+  :                      { [| Nothing |] }
+  | Where                { [| Just $($1) |] }
+
+Where :: { Q Exp }
+  : where Exp { [| Where $($2) |] }
 
 Limit :: { Maybe Int }
   :             { Nothing }
@@ -71,19 +99,31 @@ Pattern :: { Q Exp }
 
 Node :: { Q Exp }
   : name { [| PNode (Just (EIdent $1)) [] [] |] }
+  | name ':' name { [| PNode (Just (EIdent $1)) [] [Label $3] |] } 
   | '(' Node ')'   { $2 }
 
+RetExp :: { Q Exp }
+  : Exp { [| RetE $($1) |] }
+  | As { [| RetEAs $($1) |] }
+
 RetClause :: { Q Exp }
-  : Exp                  { [| $($1) ::: HNil |] }
-  | Exp ',' RetClause    { [| $($1) ::: $($3) |] }
+  : RetExp                  { [| $($1) ::: HNil |] }
+  | RetExp ',' RetClause    { [| $($1) ::: $($3) |] }
 
 Exp :: { Q Exp }
   : name                   { [| EIdent $1 |] }
+  | '{' name '}'           { [| EParam $2 |] }
   | name '.' name          { [| EProp (EIdent $1) $3 |] }
   | int                    { [| EInt (fromIntegral ($1 :: Integer)) |] }
   | '(' Exp ')'            { $2 }
+  | Exp '+' Exp            { [| EPlus $($1) $($3) |] }
+  | Exp '-' Exp            { [| EMinus $($1) $($3) |] }
+  | Exp '*' Exp            { [| ETimes $($1) $($3) |] }
+  | Exp '/' Exp            { [| EDiv $($1) $($3) |] }
+  | Exp '=~' Exp           { [| ERegExpEQ $($1) $($3) |] }
   | SCase                  { $1 }
   | GCase                  { $1 }
+  | antiquoted             { case parseExp $1 of Right e -> return e; Left err -> error err }
 
 SCase :: { Q Exp }
   : case Exp Whens Else end { [| ESCase $($2) $($3) $($4) |] }
@@ -98,6 +138,8 @@ Whens :: { Q Exp }
 When :: { Q Exp }
   : when Exp then Exp    { [| ( $($2), $($4) ) |] }
 
+As :: { Q Exp }
+  : Exp as name { [| EAs $($1) $3 |] }
 
 Else :: { Q Exp }
   :            { [| Nothing |] }
@@ -106,6 +148,6 @@ Else :: { Q Exp }
 {
 
 parseError :: [Token] -> a
-parseError _ = error "Parse error"
+parseError toks = error ("Parse error: " ++ show toks)
 
 }

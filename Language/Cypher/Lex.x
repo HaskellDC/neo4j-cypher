@@ -16,9 +16,11 @@ tokens :-
   "//".*                        ;
   $digit+                       { Int . read }
   [\+\-\*\=]                    { Operator }
+  "=~"                          { Operator }
   \.                            { const Dot }
   :                             { const Colon }
   \,                            { const Comma }
+  \$([^\$]+)\$                  { AntiQuote . init . tail }
   \(                            { const $ Paren L }
   \)                            { const $ Paren R }
   \[                            { const $ Bracket L }
@@ -41,6 +43,7 @@ data Token =
   | Dot
   | Colon
   | Comma
+  | AntiQuote String
   deriving Show
 
 data Side = L | R deriving Show
