@@ -17,6 +17,8 @@ tokens :-
   $digit+                       { Int . read }
   [\+\-\*\=]                    { Operator }
   "=~"                          { Operator }
+  ">"                           { Operator }
+  "<"                           { Operator }
   \.                            { const Dot }
   :                             { const Colon }
   \,                            { const Comma }

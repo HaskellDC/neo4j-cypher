@@ -33,6 +33,8 @@ import Language.Haskell.Meta.Parse.Careful
   '*'              { Operator "*" }
   '/'              { Operator "/" }
   '=~'             { Operator "=~" }
+  '<'              { Operator "<" }
+  '>'              { Operator ">" }
   int              { Int $$ }
   antiquoted       { AntiQuote $$ }
   match            { Name x | map toLower x == "match"    }
@@ -60,10 +62,10 @@ import Language.Haskell.Meta.Parse.Careful
 %%
 
 Query :: { Q Exp }
-  : Matches return RetClause OrderBy Skip Limit {  
+  : Matches return RetClause OrderBy Skip Limit {
     [| QReturn $($1) $($3) $($4) $5 $6 |] }
   | Query union Query     { [| QUnion False $($1) $($3) |] }
-  | Query union all Query { [| QUnion True $($1) $($4) |] } 
+  | Query union all Query { [| QUnion True $($1) $($4) |] }
 
 MatchType :: { Q Exp }
   : match { [| RequiredMatch |] }
@@ -94,13 +96,13 @@ Skip :: { Maybe Int }
 OrderBy :: { Q Exp }
   :               { [| Nothing :: Maybe (E Number) |] }
   | order by Exp  { [| Just $($3) |] }
-  
+
 Pattern :: { Q Exp }
   : Node  { $1 }
 
 Node :: { Q Exp }
   : name { [| PNode (Just (EIdent $1)) [] [] |] }
-  | name ':' name { [| PNode (Just (EIdent $1)) [] [Label $3] |] } 
+  | name ':' name { [| PNode (Just (EIdent $1)) [] [Label $3] |] }
   | '(' Node ')'   { $2 }
 
 RetExp :: { Q Exp }
