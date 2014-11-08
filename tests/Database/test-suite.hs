@@ -55,10 +55,10 @@ case_queryDBTest = do
      VStr "e2e3" ::: VNum 32.0 ::: HNil, VStr "b1c3" ::: VNum 55.0 ::: HNil,
      VStr "b1d2" ::: VNum 6.0 ::: HNil ,VStr "e7e6" ::: VNum 7.0 ::: HNil])
   where
-  query = QReturn (Just pattern) 
+  query = QReturn [Match RequiredMatch pattern Nothing]
     ret (Nothing :: Maybe (E Number)) Nothing (Just 10)
   pattern = PRel (node m) (node n) (OneEdge (Just r)) RelRight [] ["NEXT"]
-  ret = EProp r "move" ::: EMinus (EProp n "score") (EProp m "score") ::: HNil
+  ret = RetE (EProp r "move") ::: RetE (EMinus (EProp n "score") (EProp m "score")) ::: HNil
   node x = PNode (Just x) [] ["Position"] 
   [m, n, r] = map EIdent ["m", "n", "r"]
 
