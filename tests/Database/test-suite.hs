@@ -49,15 +49,14 @@ case_queryRaw = do
 case_queryDBTest :: Assertion
 case_queryDBTest = do
   res <- queryDB localServer [] query :: IO (Either String (QueryResult [Str, Number]))
-  print query
-  res @?= Right (QueryResult ["r.move","(n.score) - (m.score)"] 
-    [VStr "g8f6" ::: VNum 80.0 ::: HNil,VStr "e7e5" ::: VNum 78.0 ::: HNil,
-     VStr "g8f6" ::: VNum 59.0 ::: HNil, VStr "c1f4" ::: VNum (-23.0) ::: HNil,
-     VStr "e7e6" ::: VNum (-32.0) ::: HNil, VStr "e7e6" ::: VNum 14.0 ::: HNil,
-     VStr "e2e3" ::: VNum 32.0 ::: HNil, VStr "b1c3" ::: VNum 55.0 ::: HNil,
-     VStr "b1d2" ::: VNum 6.0 ::: HNil ,VStr "e7e6" ::: VNum 7.0 ::: HNil])
+  res @?= Right (QueryResult ["m.fen","m.score"] 
+   [VStr "8/1R1p1pkp/3Pr1p1/3Q4/4N3/r3PKPq/7P/8 b - - 7 33" ::: VNum (-1500.0) ::: HNil,
+    VStr "8/1R1p1pkp/3Pr1p1/3Q4/4N3/r3PKP1/7P/5q2 w - - 8 34" ::: VNum (-1143.0) ::: HNil,
+    VStr "1R4k1/3p1p1p/3Pr1p1/3Q4/4N3/r3PKPq/7P/8 b - - 5 32" ::: VNum (-651.0) ::: HNil,
+    VStr "6k1/8/3p3b/1p1P2p1/6P1/4P2P/1p1n4/5QK1 w - - 1 42" ::: VNum (-591.0) ::: HNil,
+    VStr "6k1/8/3p3b/1p1P2p1/2n3P1/3QP2P/1p6/r4RK1 b - - 2 40" ::: VNum (-566.0) ::: HNil])
   where
-  query = [cypher|MATCH (m:Position)-[r:NEXT]-(n:Position) RETURN r.move, (n.score) - (m.score) ORDER BY r.move LIMIT 10|]
+  query = [cypher|MATCH (m:Position) RETURN m.fen, m.score ORDER BY m.score LIMIT 5|]
 
 main :: IO ()
 main = $defaultMainGenerator
