@@ -57,7 +57,7 @@ case_queryDBTest = do
   where
   query = QReturn [Match RequiredMatch pattern Nothing]
     ret (Nothing :: Maybe (E Number)) Nothing (Just 10)
-  pattern = PRel (node m) (node n) (OneEdge (Just r)) RelRight [] ["NEXT"]
+  pattern = PRel (node m) (node n) (RelInfo (Just r) Nothing) RelRight [] ["NEXT"]
   ret = RetE (EProp r "move") ::: RetE (EMinus (EProp n "score") (EProp m "score")) ::: HNil
   node x = PNode (Just x) [] ["Position"] 
   [m, n, r] = map EIdent ["m", "n", "r"]
