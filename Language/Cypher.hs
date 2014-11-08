@@ -70,9 +70,7 @@ newtype RelType = RelType String deriving (IsString)
 data Range = Range (Maybe Int) (Maybe Int)
 
 data RelDirection = RelLeft | RelRight | RelBoth
-data RelInfo 
-  = OneEdge (Maybe (E Identifier))
-  | ManyEdges Range
+data RelInfo = RelInfo (Maybe (E Identifier)) (Maybe Range)
 
 sho :: (Show a, Monoid s, IsString s) => a -> s
 sho = fromString . show
@@ -127,8 +125,8 @@ writePattern p = case p of
   rightArr RelRight = "->"
   rightArr _ = "-"
   includeInfo :: (Monoid s, IsString s) => RelInfo -> (s -> s)
-  includeInfo (OneEdge ident) = (perhaps writeExp ident <>)
-  includeInfo (ManyEdges r) = (<> "*" <> writeRange r)
+  includeInfo (RelInfo ident mr) s = 
+    perhaps writeExp ident <> s <> perhaps (\r -> "*" <> writeRange r) mr
 
 writeExp :: (Monoid s, IsString s) => E a -> s
 writeExp e = case e of
