@@ -8,7 +8,7 @@ import Language.Cypher
 
 case_simpleMatchExample :: Assertion
 case_simpleMatchExample = 
-  show (simpleMatch (PNode (Just n) [] []) (n ::: HNil)) @?= "MATCH (n) RETURN n"
+  show (simpleMatch (PNode (Just n) [] []) (RetE n ::: HNil)) @?= "MATCH (n) RETURN n"
   where
     n = EIdent "n"
 
@@ -18,8 +18,8 @@ case_simpleMatchExample2 =
   where
     ex2 :: Query '[Str]
     ex2 = simpleMatch
-      (PRel left right (ManyEdges range) RelBoth [] ["KNOWS"])
-      (EProp remote_friend "name" ::: HNil)
+      (PRel left right (RelInfo Nothing (Just range)) RelBoth [] ["KNOWS"])
+      (RetE (EProp remote_friend "name") ::: HNil)
     range = Range (Just 1) (Just 2)
     remote_friend = EIdent "remote_friend"
     me = EIdent "me"

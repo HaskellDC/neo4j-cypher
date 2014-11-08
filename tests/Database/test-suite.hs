@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskell, QuasiQuotes #-}
 {-# LANGUAGE DataKinds #-}
 import Test.Tasty.HUnit ((@?=), Assertion, testCase)
 import Test.Tasty.TH (defaultMainGenerator)
@@ -10,6 +10,7 @@ import Database.Neo4j
 import Database.Neo4j.Types
 
 import Language.Cypher
+import Language.Cypher.Quasiquoter
 
 localServer :: Server
 localServer = Server "http://127.0.0.1:7474/db/data/transaction/commit"
@@ -41,13 +42,14 @@ simpleQuery = "RETURN 1"
 
 case_queryRaw :: Assertion
 case_queryRaw = do
-  res <- queryDBRaw localServer simpleQuery
+  res <- queryDBRaw localServer [] simpleQuery
   res @?= Right "{\"results\":[{\"columns\":[\"1\"],\"data\":[{\"row\":[1]}]}],\"errors\":[]}"
 
 -- TODO add an order by to ensure consistency of this result
 case_queryDBTest :: Assertion
 case_queryDBTest = do
-  res <- queryDB localServer query :: IO (Either String (QueryResult [Str, Number]))
+  res <- queryDB localServer [] query :: IO (Either String (QueryResult [Str, Number]))
+  print query
   res @?= Right (QueryResult ["r.move","(n.score) - (m.score)"] 
     [VStr "g8f6" ::: VNum 80.0 ::: HNil,VStr "e7e5" ::: VNum 78.0 ::: HNil,
      VStr "g8f6" ::: VNum 59.0 ::: HNil, VStr "c1f4" ::: VNum (-23.0) ::: HNil,
@@ -55,12 +57,7 @@ case_queryDBTest = do
      VStr "e2e3" ::: VNum 32.0 ::: HNil, VStr "b1c3" ::: VNum 55.0 ::: HNil,
      VStr "b1d2" ::: VNum 6.0 ::: HNil ,VStr "e7e6" ::: VNum 7.0 ::: HNil])
   where
-  query = QReturn (Just pattern) 
-    ret (Nothing :: Maybe (E Number)) Nothing (Just 10)
-  pattern = PRel (node m) (node n) (OneEdge (Just r)) RelRight [] ["NEXT"]
-  ret = EProp r "move" ::: EMinus (EProp n "score") (EProp m "score") ::: HNil
-  node x = PNode (Just x) [] ["Position"] 
-  [m, n, r] = map EIdent ["m", "n", "r"]
+  query = [cypher|MATCH (m:Position)-[r:NEXT]-(n:Position) RETURN r.move, (n.score) - (m.score) ORDER BY r.move LIMIT 10|]
 
 main :: IO ()
 main = $defaultMainGenerator
