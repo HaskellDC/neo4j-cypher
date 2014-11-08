@@ -41,13 +41,13 @@ simpleQuery = "RETURN 1"
 
 case_queryRaw :: Assertion
 case_queryRaw = do
-  res <- queryDBRaw localServer simpleQuery
+  res <- queryDBRaw localServer [] simpleQuery
   res @?= Right "{\"results\":[{\"columns\":[\"1\"],\"data\":[{\"row\":[1]}]}],\"errors\":[]}"
 
 -- TODO add an order by to ensure consistency of this result
 case_queryDBTest :: Assertion
 case_queryDBTest = do
-  res <- queryDB localServer query :: IO (Either String (QueryResult [Str, Number]))
+  res <- queryDB localServer [] query :: IO (Either String (QueryResult [Str, Number]))
   res @?= Right (QueryResult ["r.move","(n.score) - (m.score)"] 
     [VStr "g8f6" ::: VNum 80.0 ::: HNil,VStr "e7e5" ::: VNum 78.0 ::: HNil,
      VStr "g8f6" ::: VNum 59.0 ::: HNil, VStr "c1f4" ::: VNum (-23.0) ::: HNil,
