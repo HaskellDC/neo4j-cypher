@@ -18,7 +18,7 @@ case_simpleMatchExample2 =
   where
     ex2 :: Query '[Str]
     ex2 = simpleMatch
-      (PRel left right (ManyEdges range) RelBoth [] ["KNOWS"])
+      (PRel left right (RelInfo Nothing range) RelBoth [] ["KNOWS"])
       (RetE (EProp remote_friend "name") ::: HNil)
     range = Range (Just 1) (Just 2)
     remote_friend = EIdent "remote_friend"
