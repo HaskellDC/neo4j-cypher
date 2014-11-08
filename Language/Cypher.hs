@@ -273,7 +273,7 @@ writeWhere (Where expr) = "WHERE " <> writeExp expr
 
  
 data Query (l :: [CType]) where
-  QReturn :: EOrd ord =>
+  QReturn :: 
       [Match] -- ^ matches
    -> HList RetE xs -- ^ return
    -> Maybe (E ord) -- ^ order by
