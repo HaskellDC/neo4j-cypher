@@ -31,29 +31,31 @@ instance (Show (Value a), Show (HList Value as)) => Show (QueryResult (a ': as))
 instance (Eq (Value a), Eq (HList Value as)) => Eq (QueryResult (a ': as)) where
   QueryResult c1 r1 == QueryResult c2 r2 = c1 == c2 && r1 == r2
 
-createRequest :: QueryString -> A.Value
-createRequest query = 
+createRequest :: [(String, DValue)] -> QueryString -> A.Value
+createRequest params query = 
   object ["statements" .= [
-      object [
-        "statement" .= query
-        --"parameters" .= object []
+      object
+        ("statement" .= query
+        : [ "parameters" .= A.toJSON params | not (null params) ] )
       ]
     ]
-  ]
 
-queryDBRaw :: Server -> QueryString -> IO (H.Result B.ByteString)
-queryDBRaw server query = fmap (fmap H.rspBody) (H.simpleHTTP request)
+queryDBRaw :: Server -> [(String, DValue)] -> QueryString 
+  -> IO (H.Result B.ByteString)
+queryDBRaw server params query = 
+  fmap (fmap H.rspBody) (H.simpleHTTP request)
   where 
     Just uri = parseURI $ T.unpack $ serverURI server
-    body = A.encode $ createRequest query
+    body = A.encode $ createRequest params query
     headers = [ H.mkHeader H.HdrAccept "application/json"
               , H.mkHeader H.HdrContentType "application/json"
               , H.mkHeader H.HdrContentLength (show $ B.length body)
               ]
     request = H.Request uri H.POST headers body
 
-queryDB :: ConvertL xs => Server -> Query xs -> IO (Either String (QueryResult xs))
-queryDB server = fmap f . queryDBRaw server . writeQuery where
+queryDB :: ConvertL xs => Server -> 
+  [(String, DValue)] -> Query xs -> IO (Either String (QueryResult xs))
+queryDB server params = fmap f . queryDBRaw server params . writeQuery where
   f (Left connError) = Left $ show connError 
   f (Right val) = case (A.decode val :: Maybe A.Value) of
     Nothing -> Left "Error reading JSON"
