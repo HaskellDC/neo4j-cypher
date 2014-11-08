@@ -96,6 +96,7 @@ OrderBy :: { Q Exp }
   
 Pattern :: { Q Exp }
   : Node  { $1 }
+  | Pattern ',' Pattern { [| PAnd $($1) $($3) |] }
 
 Node :: { Q Exp }
   : name { [| PNode (Just (EIdent $1)) [] [] |] }
