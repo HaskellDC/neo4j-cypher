@@ -70,7 +70,7 @@ newtype RelType = RelType String deriving (IsString)
 data Range = Range (Maybe Int) (Maybe Int)
 
 data RelDirection = RelLeft | RelRight | RelBoth
-data RelInfo = RelInfo (Maybe (E Identifier)) (Maybe Range)
+--data RelInfo = RelInfo (Maybe (E Identifier)) (Maybe Range)
 
 sho :: (Show a, Monoid s, IsString s) => a -> s
 sho = fromString . show
@@ -113,9 +113,9 @@ writePattern p = case p of
     perhaps writeExp ident 
       <> mconcat [ ":" <> fromString l | Label l <- labels ]
       <> writeAssocs assocs
-  PRel left right info dir assocs types -> 
+  PRel left right ident mr dir assocs types -> 
     writePattern left <> leftArr dir <> sqbrack (
-      includeInfo info (writeRelTypes types)
+      (perhaps writeExp ident <> writeRelTypes types <> perhaps (\r -> "*" <> writeRange r) mr)
       <> writeAssocs assocs
       ) <> rightArr dir <> writePattern right
   PAnd left right -> writePattern left <> " , " <> writePattern right
@@ -124,9 +124,7 @@ writePattern p = case p of
   leftArr _ = "-"
   rightArr RelRight = "->"
   rightArr _ = "-"
-  includeInfo :: (Monoid s, IsString s) => RelInfo -> (s -> s)
-  includeInfo (RelInfo ident mr) s = 
-    perhaps writeExp ident <> s <> perhaps (\r -> "*" <> writeRange r) mr
+    
 
 writeExp :: (Monoid s, IsString s) => E a -> s
 writeExp e = case e of
@@ -248,7 +246,7 @@ writeRetE x = case x of
 
 data Pattern =
     PNode (Maybe (E Identifier)) [Assoc] [Label]
-  | PRel Pattern Pattern RelInfo RelDirection [Assoc] [RelType]
+  | PRel Pattern Pattern (Maybe (E Identifier)) (Maybe Range) RelDirection [Assoc] [RelType]
   | PAnd Pattern Pattern
 
 data MatchType = RequiredMatch | OptionalMatch
