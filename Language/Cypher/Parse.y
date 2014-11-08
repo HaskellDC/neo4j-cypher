@@ -100,11 +100,21 @@ OrderBy :: { Q Exp }
 Pattern :: { Q Exp }
   : Node  { $1 }
   | Pattern ',' Pattern { [| PAnd $($1) $($3) |] }
+  | Pattern Edge Pattern  { [| PRel $($1) $($3) Nothing Nothing $($2) [] [] |] }
 
 Node :: { Q Exp }
   : name { [| PNode (Just (EIdent $1)) [] [] |] }
   | name ':' name { [| PNode (Just (EIdent $1)) [] [Label $3] |] }
   | '(' Node ')'   { $2 }
+
+Edge :: {Q Exp }
+  : '-' EdgeStatement '-'     { [| RelBoth |] }
+  | '-' EdgeStatement '-' '>' { [| RelRight |] }
+  | '<' '-' EdgeStatement '-' { [| RelLeft |] }
+
+EdgeStatement :: {()}
+  : {()}
+
 
 RetExp :: { Q Exp }
   : Exp { [| RetE $($1) |] }
