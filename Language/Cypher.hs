@@ -136,6 +136,9 @@ writeExp e = case e of
   EParam   p -> "{" <> fromString p <> "}"
   EProp  i p -> writeExp i <> "." <> fromString p
 
+  EAbs i -> "abs(" <> writeExp i <> ")"
+  ESign i -> "sign(" <> writeExp i <> ")"
+
   EColl xs -> sqbrack . mconcat . intersperse "," $
     map writeExp xs
   EIndex xs i -> writeExp xs <> sqbrack (sho i)
@@ -191,6 +194,8 @@ instance Num (E Number) where
   x - y = EMinus x y
   negate x = EMinus (EDouble 0) x
   fromInteger x = EInt (fromIntegral x)
+  abs x = EAbs x 
+  signum x = ESign x
 
 data E :: CType -> * where
   -- literals
@@ -217,6 +222,9 @@ data E :: CType -> * where
   EConcatStr :: E Str -> E Str -> E Str
   EConcat :: E (Collection a) -> E (Collection a) -> E (Collection a)
   ELT, ELTE, EGT, EGTE :: EOrd a => E a -> E a -> E Boolean
+
+  --functions
+  EAbs, ESign :: E Number -> E Number
 
   EEQ :: EEq a => E a -> E a -> E Boolean
   ERegExpEQ :: E Str -> E Str -> E Boolean
