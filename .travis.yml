@@ -49,7 +49,7 @@ script:
     fi)
 
 after_script:
-  - hpc-coveralls db-test-suite cypher-test-suite 
+  - hpc-coveralls db-test-suite cypher-test-suite quasiquoter-test-suite
 
 notifications:
   webhooks:
